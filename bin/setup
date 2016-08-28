@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+PROJECT_ROOT=$(realpath "$(dirname $0)/../")
+
+if [ -z "$PG_USER" ]; then
+  if [[ "$(uname)" =~ "Darwin" ]]; then
+    PG_USER=$(whoami)
+  else
+    PG_USER=postgres
+  fi
+fi
+
+set -euo pipefail
+IFS=$'\n\t'
+#set -vx
+
+bundle install >/dev/null
+
+sqlite3 "$PROJECT_ROOT/db/wrapped_transaction_test.sqlite3" '.databases' >/dev/null
+mysql -e 'CREATE DATABASE IF NOT EXISTS wrapped_transaction_test;' >/dev/null
+psql -U $PG_USER -tc "SELECT 1 FROM pg_database WHERE datname = 'wrapped_transaction_test'" | grep -q 1 || psql -U $PG_USER -c "CREATE DATABASE wrapped_transaction_test"
