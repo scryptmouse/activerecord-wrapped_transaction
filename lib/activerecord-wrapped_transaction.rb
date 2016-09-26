@@ -1,1 +1,1 @@
-require 'activerecord/wrapped-transaction'
+require 'activerecord/wrapped_transaction'
