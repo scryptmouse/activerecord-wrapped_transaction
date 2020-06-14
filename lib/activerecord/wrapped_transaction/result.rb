@@ -37,7 +37,7 @@ module ActiveRecord
           @transactor = transactor
         end
 
-        wrap_transaction transaction_options do
+        wrap_transaction **transaction_options do
           execute_transaction do
             watch_for_cancellation do
               @result = yield
@@ -61,8 +61,9 @@ module ActiveRecord
       end
 
       private
-      def wrap_transaction(transaction_options = {})
-        caught = transactor.transaction(transaction_options) do
+
+      def wrap_transaction(**transaction_options)
+        caught = transactor.transaction(**transaction_options) do
           yield
         end
       ensure
@@ -85,6 +86,7 @@ module ActiveRecord
         unless cancellation_reason.eql?(NOT_CANCELLED)
           @cancelled = true
           @cancellation_reason = cancellation_reason
+
           raise ActiveRecord::Rollback, "Cancelled transaction"
         end
       end

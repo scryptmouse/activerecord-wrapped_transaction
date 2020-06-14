@@ -5,6 +5,8 @@ require 'pry'
 require 'simplecov'
 
 SimpleCov.start do
+  enable_coverage :branch
+
   add_filter { |src| src.filename =~ %r,db/(connection|models|schema), }
   add_filter 'spec/activerecord'
 end

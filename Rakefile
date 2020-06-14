@@ -5,4 +5,4 @@ RSpec::Core::RakeTask.new(:spec) do |c|
   c.verbose = false
 end
 
-task :default => :spec
+task default: :spec
