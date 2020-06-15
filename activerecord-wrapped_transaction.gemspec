@@ -23,6 +23,7 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "appraisal", "~> 2.3.0"
   spec.add_development_dependency "simplecov", "~> 0.18.5"
+  spec.add_development_dependency "database_cleaner-active_record", "~> 1.8.0"
   spec.add_development_dependency "rake", ">= 12.3.3"
   spec.add_development_dependency "rspec", "~> 3.5"
   spec.add_development_dependency "pry"
