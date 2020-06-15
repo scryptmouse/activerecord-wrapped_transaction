@@ -19,14 +19,12 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "activerecord", ">= 3.2", "< 6"
+  spec.add_dependency "activerecord", ">= 5", "< 7"
 
-  spec.add_development_dependency "simplecov", "~> 0.12.0"
-  spec.add_development_dependency "bundler", "~> 1.11"
-  spec.add_development_dependency "rake", "~> 10.0"
+  spec.add_development_dependency "appraisal", "~> 2.3.0"
+  spec.add_development_dependency "simplecov", "~> 0.18.5"
+  spec.add_development_dependency "database_cleaner-active_record", "~> 1.8.0"
+  spec.add_development_dependency "rake", ">= 12.3.3"
   spec.add_development_dependency "rspec", "~> 3.5"
   spec.add_development_dependency "pry"
-  spec.add_development_dependency "pg",       "~> 0.18.0"
-  spec.add_development_dependency "mysql2",   "~> 0.4.4"
-  spec.add_development_dependency "sqlite3"
 end

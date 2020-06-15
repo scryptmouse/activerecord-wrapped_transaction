@@ -1,0 +1,89 @@
+name: "Main"
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'lib/**'
+      - 'spec/**'
+      - '.github/workflows/main.yml'
+  pull_request:
+
+jobs:
+  rspec:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: [2.4, 2.5, 2.6, 2.7]
+        rails_version: [5, 6]
+        db: [pg, mysql2, sqlite3]
+        exclude:
+          - rails_version: 6
+            ruby: 2.4
+    env:
+      APPRAISAL_NAME: rails-${{ matrix.rails_version }}-${{ matrix.db }}
+      BUNDLE_GEMFILE: ${{ format('./gemfiles/rails_{0}_{1}.gemfile', matrix.rails_version, matrix.db) }}
+      DB_NAME: wrapped_transaction_test
+      PG_USER: test
+      PG_PASS: test
+      MYSQL_USER: root
+      MYSQL_PASS: root
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+      - name: "Install postgresql client"
+        if: ${{ matrix.db == 'pg' }}
+        run: |
+          sudo apt-get update --fix-missing
+          sudo apt-get -yqq install libpq-dev
+      - name: "Set up PG"
+        uses: harmon758/postgresql-action@v1
+        if: ${{ matrix.db == 'pg' }}
+        with:
+          postgresql version: '11'
+          postgresql db: ${{ env.DB_NAME }}
+          postgresql user: ${{ env.PG_USER }}
+          postgresql password: ${{ env.PG_PASS }}
+      - name: "Set PG DATABASE_URL"
+        if: ${{ matrix.db == 'pg' }}
+        run: |
+          echo "::set-env name=DATABASE_URL::postgres://${PG_USER}:${PG_PASS}@localhost/${DB_NAME}"
+      - name: "Shut down default MySQL database"
+        if: ${{ matrix.db == 'mysql2' }}
+        run: |
+          sudo systemctl stop mysql.service
+      - name: "Set Up MySQL"
+        if: ${{ matrix.db == 'mysql2' }}
+        uses: mirromutth/mysql-action@v1.1
+        with:
+          mysql database: ${{ env.DB_NAME }}
+          mysql root password: ${{ env.MYSQL_PASS }}
+      - name: "Set MySQL DATABASE_URL"
+        if: ${{ matrix.db == 'mysql2' }}
+        run: |
+          echo "::set-env name=DATABASE_URL::mysql2://${MYSQL_USER}:${MYSQL_PASS}@127.0.0.1/${DB_NAME}"
+      - name: "Install sqlite3"
+        if: ${{ matrix.db == 'sqlite3' }}
+        run: |
+          sudo apt-get update --fix-missing
+          sudo apt-get -yqq install sqlite3 libsqlite3-dev
+          echo "::set-env name=DATABASE_URL::sqlite3::memory:"
+      - uses: actions/cache@v2
+        with:
+          path: vendor/bundle
+          key: bundle-use-ruby-ubuntu-latest-${{ matrix.ruby }}-${{ env.APPRAISAL_NAME }}-${{ hashFiles(format('{0}.lock', env.BUNDLE_GEMFILE)) }}
+          restore-keys: |
+            bundle-use-ruby-ubuntu-latest-${{ matrix.ruby }}-${{ env.APPRAISAL_NAME }}
+      - name: bundle install
+        run: |
+          gem update --system
+          bundle config deployment true
+          bundle config path vendor/bundle
+          bundle install --jobs 4
+      - name: "Run RSpec"
+        run: |
+          bin/rspec
