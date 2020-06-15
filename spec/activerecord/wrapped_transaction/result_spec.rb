@@ -68,4 +68,21 @@ RSpec.describe ActiveRecord::WrappedTransaction::Result do
 
     expect(actor).to have_received(:respond_to?).with(:transaction).once
   end
+
+  fit 'supports nesting and handling of failures' do
+    expect do
+      Widget.wrapped_transaction requires_new: true do |ctx|
+        Widget.create! name: "kaboom"
+
+        @failed_result = ctx.maybe do
+          Widget.create! name: "kaboom"
+        end
+
+        Widget.create! name: "other"
+      end
+    end.to change(Widget, :count).by(2)
+    
+    expect(@failed_result).to be_rolled_back
+    expect(@failed_result.error).to be_a_kind_of(ActiveRecord::RecordInvalid)
+  end
 end
